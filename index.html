@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapRAG - Interactive Map Query</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Control Panel -->
+    <div id="controls" class="control-panel">
+        <div class="control-card">
+            <div class="input-group">
+                <input type="text" id="addressInput" placeholder="Enter address (e.g. Birmingham, AL)" />
+                <input type="number" id="radiusInput" placeholder="Radius (km)" min="1" max="1000" />
+                <button id="searchBtn">Search</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="loading hidden">
+        <div class="spinner"></div>
+        <span>Loading...</span>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    
+    <!-- Axios for HTTP requests -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    
+    <!-- Main Application Logic -->
+    <script src="main.js"></script>
+</body>
+</html>
