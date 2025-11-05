@@ -163,6 +163,9 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .sidebar-header h2 {
@@ -170,11 +173,44 @@ body {
     font-size: 18px;
     font-weight: 600;
     line-height: 1.4;
+    flex: 1;
 }
 
 .sidebar-header h2 span {
     display: block;
     margin-top: 4px;
+}
+
+.close-sidebar-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 28px;
+    line-height: 1;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.close-sidebar-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.close-sidebar-btn:active {
+    transform: scale(0.95);
+}
+
+.sidebar.hidden {
+    display: none;
 }
 
 .sidebar-content {

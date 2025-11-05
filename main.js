@@ -83,6 +83,7 @@ function setupEventListeners() {
     const radiusInput = document.getElementById('radiusInput');
     const searchBtn = document.getElementById('searchBtn');
     const updateMapBtn = document.getElementById('updateMapBtn');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
     
     // Search button click
     searchBtn.addEventListener('click', handleSearch);
@@ -90,6 +91,11 @@ function setupEventListeners() {
     // Update Map button click
     if (updateMapBtn) {
         updateMapBtn.addEventListener('click', handleUpdateMap);
+    }
+    
+    // Close sidebar button click
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', closeSidebar);
     }
     
     // Enter key press in inputs
@@ -207,7 +213,10 @@ async function handleSearch() {
     
     try {
         showLoading(true);
-        console.log('Searching for:', address, 'within', radius, 'km');
+        // Convert miles to kilometers for API (backend expects km)
+        const radiusKm = radius * 1.60934;
+        
+        console.log('Searching for:', address, 'within', radius, 'miles');
         
         // Step 1: Geocode the address
         const geocodeResult = await geocodeAddress(address);
@@ -218,11 +227,11 @@ async function handleSearch() {
         
         console.log('Geocoded address:', geocodeResult);
         
-        // Step 2: Search for locations within radius
+        // Step 2: Search for locations within radius (send km to API)
         const response = await axios.post(`${API_BASE_URL}/query`, {
             latitude: geocodeResult.lat,
             longitude: geocodeResult.lon,
-            radius: radius
+            radius: radiusKm
         });
         
         const data = response.data;
@@ -232,10 +241,10 @@ async function handleSearch() {
         clearMarkers();
         plotMarkers(data);
         
-        // Step 4: Update sidebar with results
+        // Step 4: Update sidebar with results (display in miles)
         updateSidebar(data, radius);
         
-        // Step 5: Draw search radius circle
+        // Step 5: Draw search radius circle (in miles)
         drawSearchCircle(geocodeResult.lat, geocodeResult.lon, radius);
         
         // Step 6: Center map on search location
@@ -389,20 +398,20 @@ function clearMarkers() {
  * Draw a search radius circle on the map
  * @param {number} lat - Latitude of center
  * @param {number} lon - Longitude of center
- * @param {number} radiusKm - Radius in kilometers
+ * @param {number} radiusMiles - Radius in miles
  */
-function drawSearchCircle(lat, lon, radiusKm) {
+function drawSearchCircle(lat, lon, radiusMiles) {
     // Remove existing search circle
     if (searchCircle) {
         map.removeLayer(searchCircle);
     }
     
-    // Create new search circle
+    // Create new search circle (convert miles to meters: 1 mile = 1609.34 meters)
     searchCircle = L.circle([lat, lon], {
         color: '#3388ff',
         fillColor: '#3388ff',
         fillOpacity: 0.2,
-        radius: radiusKm * 1000 // Convert km to meters
+        radius: radiusMiles * 1609.34 // Convert miles to meters
     }).addTo(map);
 }
 
@@ -508,10 +517,10 @@ function formatCoordinates(lat, lng) {
  * @param {number} lng1 - First longitude
  * @param {number} lat2 - Second latitude
  * @param {number} lng2 - Second longitude
- * @returns {number} Distance in kilometers
+ * @returns {number} Distance in miles
  */
 function calculateDistance(lat1, lng1, lat2, lng2) {
-    const R = 6371; // Earth's radius in kilometers
+    const R = 3959; // Earth's radius in miles
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -543,17 +552,22 @@ function updateStars(starsContainer, rating) {
 /**
  * Update the sidebar with search results
  * @param {Array} results - Array of location results
- * @param {number} radius - Search radius in kilometers
+ * @param {number} radius - Search radius in miles
  */
 function updateSidebar(results, radius) {
     const sidebarContent = document.getElementById('sidebarContent');
     const sidebarTitle = document.getElementById('sidebarTitle');
     const sidebar = document.getElementById('sidebar');
     
+    // Show sidebar when updating with results
+    if (sidebar) {
+        sidebar.classList.remove('hidden');
+    }
+    
     // Update title with total results count
     const resultCount = results && results.length ? results.length : 0;
     if (results && results.length > 0) {
-        sidebarTitle.innerHTML = `Results within ${radius} km<br><span style="font-size: 14px; font-weight: 400; opacity: 0.9;">Total results: ${resultCount}</span>`;
+        sidebarTitle.innerHTML = `Results within ${radius} miles<br><span style="font-size: 14px; font-weight: 400; opacity: 0.9;">Total results: ${resultCount}</span>`;
     } else {
         sidebarTitle.innerHTML = 'Search Results<br><span style="font-size: 14px; font-weight: 400; opacity: 0.9;">Total results: 0</span>';
     }
@@ -572,6 +586,8 @@ function updateSidebar(results, radius) {
         if (window.innerWidth <= 768) {
             sidebar.classList.add('open');
         }
+        // Adjust map width after showing sidebar
+        adjustMapWidth();
         return;
     }
     
@@ -886,6 +902,40 @@ function updateSidebar(results, radius) {
     if (window.innerWidth <= 768) {
         sidebar.classList.add('open');
     }
+    
+    // Adjust map width after showing sidebar
+    adjustMapWidth();
+}
+
+/**
+ * Close the sidebar
+ */
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mapElement = document.getElementById('map');
+    
+    if (sidebar) {
+        sidebar.classList.add('hidden');
+        mapElement.style.width = '100vw';
+        
+        // Trigger map resize
+        setTimeout(() => {
+            if (map) {
+                map.invalidateSize();
+            }
+        }, 100);
+    }
+}
+
+/**
+ * Show the sidebar
+ */
+function showSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.classList.remove('hidden');
+        adjustMapWidth();
+    }
 }
 
 /**
@@ -901,14 +951,16 @@ function adjustMapWidth() {
     }
     
     if (window.innerWidth > 768) {
-        // Desktop: sidebar always visible, adjust map width
-        const sidebarWidth = window.getComputedStyle(sidebar).width;
-        console.log('Desktop mode - Sidebar width:', sidebarWidth);
-        mapElement.style.width = 'calc(100vw - 32%)';
-        if (sidebar) {
+        // Desktop: sidebar visible unless hidden, adjust map width
+        if (sidebar && !sidebar.classList.contains('hidden')) {
+            const sidebarWidth = window.getComputedStyle(sidebar).width;
+            console.log('Desktop mode - Sidebar width:', sidebarWidth);
+            mapElement.style.width = 'calc(100vw - 32%)';
             sidebar.classList.remove('open'); // Remove mobile class if present
             // Ensure sidebar is visible on desktop
             sidebar.style.transform = 'translateX(0)';
+        } else {
+            mapElement.style.width = '100vw';
         }
     } else {
         // Mobile: full width, sidebar hidden by default (controlled by CSS)
