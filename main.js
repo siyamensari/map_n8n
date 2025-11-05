@@ -83,7 +83,7 @@ function setupEventListeners() {
     const radiusInput = document.getElementById('radiusInput');
     const searchBtn = document.getElementById('searchBtn');
     const updateMapBtn = document.getElementById('updateMapBtn');
-    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
     
     // Search button click
     searchBtn.addEventListener('click', handleSearch);
@@ -93,9 +93,9 @@ function setupEventListeners() {
         updateMapBtn.addEventListener('click', handleUpdateMap);
     }
     
-    // Close sidebar button click
-    if (closeSidebarBtn) {
-        closeSidebarBtn.addEventListener('click', closeSidebar);
+    // Toggle sidebar button click
+    if (toggleSidebarBtn) {
+        toggleSidebarBtn.addEventListener('click', toggleSidebar);
     }
     
     // Enter key press in inputs
@@ -559,9 +559,15 @@ function updateSidebar(results, radius) {
     const sidebarTitle = document.getElementById('sidebarTitle');
     const sidebar = document.getElementById('sidebar');
     
-    // Show sidebar when updating with results
+    // Show sidebar when updating with results (ensure it's expanded, not minimized)
     if (sidebar) {
         sidebar.classList.remove('hidden');
+        sidebar.classList.remove('minimized');
+        const toggleBtn = document.getElementById('toggleSidebarBtn');
+        if (toggleBtn) {
+            toggleBtn.textContent = '−';
+            toggleBtn.title = 'Minimize sidebar';
+        }
     }
     
     // Update title with total results count
@@ -908,34 +914,40 @@ function updateSidebar(results, radius) {
 }
 
 /**
- * Close the sidebar
+ * Toggle sidebar between minimized and expanded states
  */
-function closeSidebar() {
+function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
     const mapElement = document.getElementById('map');
     
-    if (sidebar) {
-        sidebar.classList.add('hidden');
-        mapElement.style.width = '100vw';
+    if (!sidebar || !toggleBtn) return;
+    
+    const isMinimized = sidebar.classList.contains('minimized');
+    
+    if (isMinimized) {
+        // Expand sidebar
+        sidebar.classList.remove('minimized');
+        toggleBtn.textContent = '−';
+        toggleBtn.title = 'Minimize sidebar';
         
-        // Trigger map resize
-        setTimeout(() => {
-            if (map) {
-                map.invalidateSize();
-            }
-        }, 100);
+        if (window.innerWidth > 768) {
+            mapElement.style.width = 'calc(100vw - 32%)';
+        }
+    } else {
+        // Minimize sidebar
+        sidebar.classList.add('minimized');
+        toggleBtn.textContent = '+';
+        toggleBtn.title = 'Expand sidebar';
+        mapElement.style.width = '100vw';
     }
-}
-
-/**
- * Show the sidebar
- */
-function showSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-        sidebar.classList.remove('hidden');
-        adjustMapWidth();
-    }
+    
+    // Trigger map resize
+    setTimeout(() => {
+        if (map) {
+            map.invalidateSize();
+        }
+    }, 300); // Match CSS transition duration
 }
 
 /**
@@ -951,8 +963,8 @@ function adjustMapWidth() {
     }
     
     if (window.innerWidth > 768) {
-        // Desktop: sidebar visible unless hidden, adjust map width
-        if (sidebar && !sidebar.classList.contains('hidden')) {
+        // Desktop: sidebar visible unless hidden or minimized, adjust map width
+        if (sidebar && !sidebar.classList.contains('hidden') && !sidebar.classList.contains('minimized')) {
             const sidebarWidth = window.getComputedStyle(sidebar).width;
             console.log('Desktop mode - Sidebar width:', sidebarWidth);
             mapElement.style.width = 'calc(100vw - 32%)';
