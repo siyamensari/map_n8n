@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MapRAG - Interactive Map Query</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon-32x32.png">
+    <link rel="apple-touch-icon" href="favicon-32x32.png">
+    
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
@@ -14,6 +18,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Update Map Button -->
+    <button id="updateMapBtn" class="update-map-btn">Update Map</button>
+    
     <!-- Control Panel -->
     <div id="controls" class="control-panel">
         <div class="control-card">
@@ -28,6 +35,18 @@
 
     <!-- Map Container -->
     <div id="map"></div>
+
+    <!-- Results Sidebar -->
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h2 id="sidebarTitle">Search Results</h2>
+        </div>
+        <div id="sidebarContent" class="sidebar-content">
+            <div class="sidebar-placeholder">
+                <p>Perform a search to see results here</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Loading Indicator -->
     <div id="loadingIndicator" class="loading hidden">
