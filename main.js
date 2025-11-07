@@ -25,6 +25,7 @@ let markers = [];
 let searchCircle = null;
 let searchLocationMarker = null;
 let isLoading = false;
+let lastSearchLocation = null;
 
 /**
  * Initialize the application when DOM is loaded
@@ -227,6 +228,12 @@ async function handleSearch() {
         }
         
         console.log('Geocoded address:', geocodeResult);
+        
+        // Store the search location for later distance calculations
+        lastSearchLocation = {
+            lat: geocodeResult.lat,
+            lon: geocodeResult.lon
+        };
         
         // Step 2: Search for locations within radius (send km to API)
         const response = await axios.post(`${API_BASE_URL}/query`, {
@@ -631,6 +638,19 @@ function updateSidebar(results, radius) {
     // Process results and sort if distance is available
     const processedResults = results.map((raw, index) => {
         const rec = raw.json || raw;
+        
+        let distanceMiles = null;
+        const locLat = parseFloat(rec.latitude ?? rec.lat ?? rec.Latitude ?? rec.Lat);
+        const locLon = parseFloat(rec.longitude ?? rec.lon ?? rec.Longitude ?? rec.Lon);
+        if (lastSearchLocation && !Number.isNaN(locLat) && !Number.isNaN(locLon)) {
+            distanceMiles = Number(calculateDistance(
+                lastSearchLocation.lat,
+                lastSearchLocation.lon,
+                locLat,
+                locLon
+            ).toFixed(1));
+        }
+
         return {
             index: index + 1,
             serial: rec.serial || rec.Serial || rec['Serial No.'] || rec['Serial No'] || rec.serial_no || index + 1,
@@ -642,7 +662,7 @@ function updateSidebar(results, radius) {
             contact: rec.contact || rec.Contact || '',
             email: rec.email || rec.Email || '',
             website: rec.website || rec.Website || '',
-            distance: rec.distance || null,
+            distance: distanceMiles,
             rating: rec.rating || rec.Rating || null,
             feedback: rec.feedback || rec.Feedback || null
         };
@@ -671,7 +691,10 @@ function updateSidebar(results, radius) {
         header.className = 'result-card-header';
         header.innerHTML = `
             <span class="result-number">${result.index}</span>
-            <h3 class="result-name">${result.name}</h3>
+            <div class="result-name-distance">
+                <h3 class="result-name">${result.name}</h3>
+                ${result.distance !== null ? `<span class="result-distance">${result.distance} miles</span>` : ''}
+            </div>
         `;
         card.appendChild(header);
         

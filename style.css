@@ -317,12 +317,24 @@ body {
     flex-shrink: 0;
 }
 
+.result-name-distance {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .result-name {
     font-size: 16px;
     font-weight: 600;
     color: #333;
     margin: 0;
     flex: 1;
+}
+
+.result-distance {
+    font-size: 13px;
+    color: #667eea;
+    font-weight: 600;
 }
 
 .result-field {
