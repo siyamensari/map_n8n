@@ -23,6 +23,7 @@ const DEFAULT_ZOOM = 6;
 let map;
 let markers = [];
 let searchCircle = null;
+let searchLocationMarker = null;
 let isLoading = false;
 
 /**
@@ -246,6 +247,7 @@ async function handleSearch() {
         
         // Step 5: Draw search radius circle (in miles)
         drawSearchCircle(geocodeResult.lat, geocodeResult.lon, radius);
+        highlightSearchLocation(geocodeResult.lat, geocodeResult.lon, geocodeResult.display_name || address);
         
         // Step 6: Center map on search location
         map.setView([geocodeResult.lat, geocodeResult.lon], Math.max(8, map.getZoom()));
@@ -413,6 +415,35 @@ function drawSearchCircle(lat, lon, radiusMiles) {
         fillOpacity: 0.2,
         radius: radiusMiles * 1609.34 // Convert miles to meters
     }).addTo(map);
+}
+
+/**
+ * Highlight the user's search location with a distinct marker
+ * @param {number} lat - Latitude of search location
+ * @param {number} lon - Longitude of search location
+ * @param {string} label - Optional label to show in popup
+ */
+function highlightSearchLocation(lat, lon, label = '') {
+    if (!map) {
+        return;
+    }
+
+    // Remove existing search marker
+    if (searchLocationMarker) {
+        map.removeLayer(searchLocationMarker);
+    }
+
+    searchLocationMarker = L.circleMarker([lat, lon], {
+        radius: 9,
+        color: '#ff4757',
+        fillColor: '#ff4757',
+        fillOpacity: 0.95,
+        weight: 2
+    }).addTo(map);
+
+    if (label) {
+        searchLocationMarker.bindPopup(`<strong>Search location</strong><br>${label}`);
+    }
 }
 
 /**
